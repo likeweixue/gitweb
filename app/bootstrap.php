@@ -9,7 +9,7 @@ use App\Core\Config;
 use App\Core\Logger;
 use App\Core\Session;
 
-define('GW_VERSION', 'beta1');
+define('GW_VERSION', 'beta2');
 define('GW_APP_ROOT', dirname(__DIR__));
 define('GW_STORAGE', GW_APP_ROOT . '/storage');
 define('GW_START', microtime(true));

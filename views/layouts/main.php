@@ -7,6 +7,7 @@
 <link rel="icon" href="<?= asset('/favicon.svg') ?>" type="image/svg+xml">
 <link rel="stylesheet" href="<?= asset('/css/app.css') ?>">
 <link rel="stylesheet" href="<?= asset('/css/highlight.css') ?>">
+<link rel="stylesheet" href="<?= asset('/css/splash.css') ?>">
 </head>
 <body>
 <header class="topbar">
@@ -14,7 +15,7 @@
     <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单"><?= icon('menu', 20) ?></button>
     <a class="brand" href="<?= url('/') ?>">
       <svg class="brand-mark" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
-        <rect width="32" height="32" rx="7" fill="#0969da"/>
+        <rect width="32" height="32" rx="7" fill="#ff7500"/>
         <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
           <line x1="11" y1="10" x2="11" y2="22"/>
           <path d="M11 15.5a5.5 5.5 0 0 1 5.5-5.5"/>
@@ -74,10 +75,15 @@
     <span class="footer-sep">·</span>
     <span>Built by WorkBuddy × likeweixue</span>
     <span class="footer-sep">·</span>
+    <span class="mono-foot">POWERED BY <b>WORKBUDDY</b></span>
+    <span class="footer-sep">·</span>
     <a href="<?= url('/explore') ?>">探索</a>
   </div>
 </footer>
 
+<?= partial('splash') ?>
+
 <script src="<?= asset('/js/app.js') ?>" defer></script>
+<script src="<?= asset('/js/splash.js') ?>" defer></script>
 </body>
 </html>

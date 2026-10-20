@@ -2,6 +2,27 @@
 
 本项目的版本号约定：每次迭代 +1（betaN）。
 
+## beta2（2026-10-20）
+
+整体 UI 改造为 dsh-startup-screen 视觉语言（参考 WorkBuddy 资料库 `dsh-startup-screen-main` 设计）。
+
+### 设计系统（暗色工作台主题）
+- 暗色近黑画布 + 网格底纹，暖白「技术档案」底板，橙 `#ff7500` 强调色，红 `#ff3b30` / 蓝 `#2971b8` 色散故障色
+- 等宽英文小标签（kicker / eyebrow）、色散故障标题（glitch，红蓝 RGB 错位）、环形准星（reticle）母题
+- 「POWERED BY WORKBUDDY」页脚、品牌标改为橙色并带辉光
+- 全站组件（顶栏 / 卡片 / 按钮 / 表单 / 表格 / 徽章 / 代码块 / 差异 / 设置 / 后台）适配暗色主题，保留全部原有类名，模板无需改动
+
+### 开机启动动画（splash）
+- 六幕开机序列：黑幕 GITWEB 标识 → 过曝洗白 → 暖白技术档案底板（品牌块 + 五步授权，英文副标题逐字打字）→ 色散故障揭幕 → 欢迎
+- 环形准星自转、扫描线、进度条、可跳过（Esc / 点击 / SKIP 按钮）
+- 按会话播放一次（sessionStorage），`?splash=1` 可强制重播；`prefers-reduced-motion` 与无 JS 时安全兜底（不会把用户留在黑屏）
+- 新增文件：`public/assets/css/splash.css`、`public/assets/js/splash.js`、`views/partials/splash.php`
+
+### 落地页
+- 新增英文等宽小标签（kicker）、色散故障主标题，右侧演示终端改为暗色主题配色
+
+> 注：beta2 规划中的 PR / 组织团队 / Webhook / 通知等功能尚未实现，将在后续迭代推进。
+
 ## beta1（2026-10-20）
 
 首个可用版本，完成 Git 托管平台核心能力。

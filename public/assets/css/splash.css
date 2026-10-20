@@ -1,0 +1,334 @@
+/* =============================================================
+   Gitweb 开机启动动画 · dsh-startup-screen 风格
+   黑幕 → 环形准星 → 过曝洗白 → 暖白档案底板 → 五步授权 → 色散揭幕
+   ============================================================= */
+
+.gw-boot {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #060608;
+    color: #f3ede1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+.gw-boot.is-done { opacity: 0; pointer-events: none; }
+
+/* 网格底纹 + 暗角 */
+.gw-boot-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,117,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,117,0,0.05) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 40%, transparent 100%);
+}
+.gw-boot-grid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 70% at 50% 50%, transparent 55%, rgba(0,0,0,0.85) 100%);
+}
+
+/* 扫描线 */
+.gw-boot-scan {
+    position: absolute;
+    left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, rgba(255,117,0,0.10), transparent);
+    animation: gw-scan 4.6s linear infinite;
+    opacity: 0.6;
+}
+@keyframes gw-scan {
+    0% { top: -120px; }
+    100% { top: 100%; }
+}
+
+.gw-boot-stage {
+    position: relative;
+    z-index: 2;
+    width: min(760px, 92vw);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 环形准星 */
+.gw-reticle {
+    width: 132px;
+    height: 132px;
+    margin-bottom: 22px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+.gw-boot.act-brand .gw-reticle,
+.gw-boot.act-flash .gw-reticle,
+.gw-boot.act-dossier .gw-reticle,
+.gw-boot.act-steps .gw-reticle,
+.gw-boot.act-reveal .gw-reticle { opacity: 1; }
+.gw-reticle svg { width: 100%; height: 100%; animation: gw-spin 9s linear infinite; }
+.gw-reticle .gw-ring { filter: drop-shadow(0 0 6px rgba(255,117,0,0.7)); }
+@keyframes gw-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 主标识 */
+.gw-boot-word {
+    position: relative;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+    color: #f7f3ec;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.gw-boot.act-brand .gw-boot-word,
+.gw-boot.act-flash .gw-boot-word { opacity: 1; transform: none; }
+.gw-boot-tag {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    letter-spacing: 0.34em;
+    text-indent: 0.34em;
+    color: #ff7500;
+    margin-top: 10px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.gw-boot.act-brand .gw-boot-tag,
+.gw-boot.act-flash .gw-boot-tag { opacity: 0.9; }
+
+/* 过曝洗白 */
+.gw-boot-flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    z-index: 5;
+    pointer-events: none;
+}
+.gw-boot.act-flash .gw-boot-flash { animation: gw-overexpose 0.7s ease-out; }
+@keyframes gw-overexpose {
+    0% { opacity: 0; }
+    35% { opacity: 0.92; }
+    100% { opacity: 0; }
+}
+
+/* 暖白档案底板（技术档案） */
+.gw-dossier {
+    margin-top: 30px;
+    width: 100%;
+    background: #f3ede1;
+    color: #20180e;
+    border-radius: 12px;
+    padding: 22px 26px 24px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,117,0,0.25);
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    display: none;
+}
+.gw-boot.act-dossier .gw-dossier,
+.gw-boot.act-steps .gw-dossier,
+.gw-boot.act-reveal .gw-dossier { display: block; opacity: 1; transform: none; }
+
+.gw-dossier-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid rgba(32,24,14,0.15);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+.gw-dossier-head .gw-dh-title {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #8a6a3a;
+}
+.gw-dossier-head .gw-dh-id {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #b79a6a;
+}
+
+.gw-brand-block { margin-bottom: 18px; }
+.gw-bb-1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #1a1206;
+}
+.gw-bb-2 {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #a8752b;
+    margin-top: 3px;
+}
+.gw-bb-3 {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #b79a6a;
+}
+
+.gw-steps { display: flex; flex-direction: column; gap: 9px; }
+.gw-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px dashed rgba(32,24,14,0.12);
+}
+.gw-step:last-child { border-bottom: none; }
+.gw-step-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(32,24,14,0.3);
+    flex-shrink: 0;
+    position: relative;
+    background: transparent;
+    transition: border-color 0.2s, background 0.2s;
+}
+.gw-step.is-active .gw-step-dot { border-color: #ff7500; }
+.gw-step.is-done .gw-step-dot { border-color: #c0571a; background: #ff7500; }
+.gw-step.is-done .gw-step-dot::after {
+    content: "";
+    position: absolute;
+    left: 4px; top: 1px;
+    width: 4px; height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+}
+.gw-step-body { display: flex; flex-direction: column; min-width: 0; }
+.gw-step-zh { font-size: 14px; font-weight: 600; color: #20180e; }
+.gw-step-zh.is-pending { color: rgba(32,24,14,0.34); }
+.gw-step-en {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #a8752b;
+    min-height: 14px;
+}
+.gw-step-en .gw-caret {
+    display: inline-block;
+    width: 6px;
+    background: #ff7500;
+    margin-left: 1px;
+    animation: gw-blink 0.8s steps(2) infinite;
+}
+@keyframes gw-blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+
+.gw-progress {
+    margin-top: 18px;
+    height: 4px;
+    background: rgba(32,24,14,0.12);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.gw-progress > span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: #ff7500;
+    box-shadow: 0 0 10px rgba(255,117,0,0.8);
+    transition: width 0.4s ease;
+}
+
+/* 色散故障揭幕 */
+.gw-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+}
+.gw-boot.act-reveal .gw-reveal { animation: gw-reveal-show 0.7s ease forwards; }
+@keyframes gw-reveal-show { 0% { opacity: 0; } 100% { opacity: 1; } }
+.gw-reveal-word {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 84px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
+    color: #f7f3ec;
+    position: relative;
+    text-shadow: 0 0 30px rgba(255,117,0,0.5);
+}
+.gw-reveal-word::before, .gw-reveal-word::after {
+    content: "GITWEB";
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    text-align: center;
+}
+.gw-reveal-word::before { color: #ff3b30; animation: gw-split-a 0.5s ease-out; }
+.gw-reveal-word::after { color: #2971b8; animation: gw-split-b 0.5s ease-out; }
+@keyframes gw-split-a { 0% { transform: translate(-14px, 0); opacity: 0.9; } 100% { transform: translate(-3px, 0); opacity: 0.85; } }
+@keyframes gw-split-b { 0% { transform: translate(14px, 0); opacity: 0.9; } 100% { transform: translate(3px, 0); opacity: 0.85; } }
+
+.gw-boot-welcome {
+    position: absolute;
+    bottom: 16%;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 13px;
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    color: #ff7500;
+    opacity: 0;
+}
+.gw-boot.act-reveal .gw-boot-welcome { animation: gw-welcome 0.6s ease 0.4s forwards; }
+@keyframes gw-welcome { from { opacity: 0; transform: translateY(8px); } to { opacity: 0.95; transform: none; } }
+
+/* 页脚 + 跳过 */
+.gw-boot-foot {
+    position: absolute;
+    bottom: 22px; left: 0; right: 0;
+    text-align: center;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
+    color: rgba(243,237,225,0.4);
+    z-index: 3;
+}
+.gw-boot-skip {
+    position: absolute;
+    top: 20px; right: 22px;
+    z-index: 7;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: rgba(243,237,225,0.7);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(243,237,225,0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.gw-boot-skip:hover { background: rgba(255,117,0,0.18); color: #fff; }
+
+/* 安全兜底：即便 JS 未执行，8s 后自动淡出，绝不把用户留在黑屏 */
+.gw-boot { animation: gw-boot-safety 8s linear forwards; }
+@keyframes gw-boot-safety { 0%,92% { opacity: 1; } 100% { opacity: 0; } }
+.gw-boot.is-done { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .gw-reticle svg, .gw-boot-scan { animation: none; }
+    .gw-boot { animation: none; }
+}

@@ -1,6 +1,7 @@
 <section class="hero">
   <div class="hero-text">
-    <h1 class="hero-title">属于你自己的<br>代码托管平台</h1>
+    <div class="kicker">SELF-HOSTED GIT PLATFORM · 自托管代码平台</div>
+    <h1 class="hero-title glitch" data-text="属于你自己的代码托管平台">属于你自己的代码托管平台</h1>
     <p class="hero-sub">
       Gitweb 是一套零依赖的自托管 Git 平台：PHP 8 + MySQL 8，无需 Docker、无需 Composer，
       一条命令即可在你自己的服务器上运行。代码浏览、Issues、协作者、SSH/HTTPS 双协议推送，开箱即用。
@@ -17,20 +18,20 @@ git push -u origin main</code></pre>
   </div>
   <div class="hero-visual" aria-hidden="true">
     <svg viewBox="0 0 320 240" class="hero-svg">
-      <rect x="8" y="8" width="304" height="224" rx="12" fill="#f6f8fa" stroke="#d1d9e0"/>
-      <rect x="8" y="8" width="304" height="34" rx="12" fill="#ffffff" stroke="#d1d9e0"/>
-      <circle cx="26" cy="25" r="4" fill="#ff7b72"/>
-      <circle cx="40" cy="25" r="4" fill="#ffa657"/>
-      <circle cx="54" cy="25" r="4" fill="#57ab5a"/>
-      <text x="76" y="29" font-size="11" fill="#59636e" font-family="monospace">bash — git push</text>
-      <g font-family="monospace" font-size="11" fill="#1f2328">
-        <text x="26" y="66">$ git remote add origin https://site/you/app.git</text>
-        <text x="26" y="88">$ git push -u origin main</text>
-        <text x="26" y="118" fill="#1a7f37">Enumerating objects: 24, done.</text>
-        <text x="26" y="138" fill="#1a7f37">Writing objects: 100% (24/24), done.</text>
-        <text x="26" y="158" fill="#0969da">To https://site/you/app.git</text>
-        <text x="26" y="178" fill="#0969da"> * [new branch]      main -&gt; main</text>
-        <text x="26" y="208" fill="#59636e">✔ 推送成功，去网页端看看代码吧</text>
+      <rect x="8" y="8" width="304" height="224" rx="12" fill="#121217" stroke="#2a2a33"/>
+      <rect x="8" y="8" width="304" height="34" rx="12" fill="#1a1a21" stroke="#2a2a33"/>
+      <circle cx="26" cy="25" r="4" fill="#f85149"/>
+      <circle cx="40" cy="25" r="4" fill="#ff8c1f"/>
+      <circle cx="54" cy="25" r="4" fill="#2ea043"/>
+      <text x="76" y="29" font-size="11" fill="#9a948a" font-family="monospace">bash — git push</text>
+      <g font-family="monospace" font-size="11" fill="#e9e4da">
+        <text x="26" y="66" fill="#ff7500">$ git remote add origin https://site/you/app.git</text>
+        <text x="26" y="88" fill="#ff7500">$ git push -u origin main</text>
+        <text x="26" y="118" fill="#2ea043">Enumerating objects: 24, done.</text>
+        <text x="26" y="138" fill="#2ea043">Writing objects: 100% (24/24), done.</text>
+        <text x="26" y="158" fill="#2971b8">To https://site/you/app.git</text>
+        <text x="26" y="178" fill="#2971b8"> * [new branch]      main -&gt; main</text>
+        <text x="26" y="208" fill="#9a948a">✔ 推送成功，去网页端看看代码吧</text>
       </g>
     </svg>
   </div>
