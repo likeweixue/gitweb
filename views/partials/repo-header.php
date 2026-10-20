@@ -8,6 +8,7 @@ $forked = $forkedFrom ?? null;
 $tabs = [
     'code'     => ['label' => '代码', 'url' => repo_url($repo), 'icon' => 'code'],
     'issues'   => ['label' => 'Issues', 'url' => repo_url($repo, '/issues'), 'icon' => 'issue', 'count' => (int)($repo['issues_count'] ?? 0)],
+    'pulls'    => ['label' => 'Pull requests', 'url' => repo_url($repo, '/pulls'), 'icon' => 'pull-request', 'count' => \App\Model\PullRequest::openCount((int)$repo['id'])],
     'releases' => ['label' => 'Releases', 'url' => repo_url($repo, '/releases'), 'icon' => 'package'],
 ];
 if (in_array($perm, ['owner', 'admin'], true)) {

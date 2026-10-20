@@ -256,6 +256,62 @@ CREATE TABLE IF NOT EXISTS `webhooks` (
   CONSTRAINT `fk_webhook_repo` FOREIGN KEY (`repo_id`) REFERENCES `repositories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- ---------- Pull Requests ----------
+CREATE TABLE IF NOT EXISTS `pull_requests` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `repo_id` INT UNSIGNED NOT NULL,
+  `number` INT UNSIGNED NOT NULL COMMENT '仓库内序号',
+  `title` VARCHAR(255) NOT NULL,
+  `body` TEXT NOT NULL,
+  `author_id` INT UNSIGNED NOT NULL,
+  `base_ref` VARCHAR(100) NOT NULL DEFAULT 'main',
+  `head_ref` VARCHAR(100) NOT NULL DEFAULT '',
+  `head_repo_id` INT UNSIGNED DEFAULT NULL COMMENT 'Fork 来源仓库（同仓 PR 为 NULL）',
+  `head_sha` VARCHAR(64) NOT NULL DEFAULT '',
+  `state` VARCHAR(10) NOT NULL DEFAULT 'open' COMMENT 'open|merged|closed',
+  `merge_strategy` VARCHAR(10) DEFAULT NULL COMMENT 'merge|squash|rebase',
+  `merged_by` INT UNSIGNED DEFAULT NULL,
+  `merged_at` TIMESTAMP NULL DEFAULT NULL,
+  `closed_by` INT UNSIGNED DEFAULT NULL,
+  `closed_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pr_repo_number` (`repo_id`, `number`),
+  KEY `idx_pr_repo_state` (`repo_id`, `state`, `created_at`),
+  CONSTRAINT `fk_pr_repo` FOREIGN KEY (`repo_id`) REFERENCES `repositories` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_pr_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_pr_head_repo` FOREIGN KEY (`head_repo_id`) REFERENCES `repositories` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_pr_merged_by` FOREIGN KEY (`merged_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_pr_closed_by` FOREIGN KEY (`closed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pull Request';
+
+CREATE TABLE IF NOT EXISTS `pull_request_comments` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `pr_id` INT UNSIGNED NOT NULL,
+  `author_id` INT UNSIGNED NOT NULL,
+  `body` TEXT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_prcomment_pr` (`pr_id`, `created_at`),
+  CONSTRAINT `fk_prcomment_pr` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_prcomment_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `pull_request_reviews` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `pr_id` INT UNSIGNED NOT NULL,
+  `author_id` INT UNSIGNED NOT NULL,
+  `state` VARCHAR(15) NOT NULL DEFAULT 'commented' COMMENT 'approved|changes_requested|commented',
+  `body` TEXT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_prreview_pr` (`pr_id`, `created_at`),
+  CONSTRAINT `fk_prreview_pr` FOREIGN KEY (`pr_id`) REFERENCES `pull_requests` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_prreview_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- ---------- 站点设置（KV） ----------
 CREATE TABLE IF NOT EXISTS `settings` (
   `name` VARCHAR(60) NOT NULL,

@@ -2,6 +2,27 @@
 
 本项目的版本号约定：每次迭代 +1（betaN）。
 
+## beta3（2026-10-21）
+
+新增 Pull Request 协作流程与分支管理（最「GitHub 化」的核心能力）。
+
+### Pull Request
+- PR 列表页（`/repo/pulls`）：按 open/closed/all 过滤，显示状态徽章、作者、源/目标分支、ahead/behind
+- 新建 PR（`/repo/pulls/new`）：选择 base（要合并到）/ head（来源）分支，支持跨仓库 fork PR，可选合并策略（merge / squash / rebase）
+- PR 详情页（`/repo/pulls/{number}`）：提交列表、文件差异（复用 diff 渲染）、讨论评论、审查（approve / request changes / comment）、合并/关闭/重开
+- 合并策略在 bare 仓库无工作树下实现：`merge` 生成两父合并提交、`squash` 单提交压合、`rebase` 线性重放；冲突时拒绝合并并提示
+- 跨仓库 PR：临时 `fetch` head 仓到 base 仓再 diff / 合并，不污染 base 仓长驻引用
+
+### 分支管理
+- 分支列表页新增「新建分支」（基于某分支）、每行「删除分支」（危险操作二次确认）
+- 对应端点：`POST /repo/branches`、`POST /repo/branches/delete`
+
+### 数据库
+- 新增 `pull_requests` / `pull_request_comments` / `pull_request_reviews` 三张表（`schema.sqlite.sql` / `schema.mysql.sql`）
+- 新增幂等迁移脚本 `bin/migrate.php`（双驱动，供已部署实例升级）
+
+> 注：beta2 规划中的组织/团队、Webhook、通知等功能尚未实现，将在后续迭代推进。
+
 ## beta2（2026-10-20）
 
 整体 UI 改造为 dsh-startup-screen 视觉语言（参考 WorkBuddy 资料库 `dsh-startup-screen-main` 设计）。

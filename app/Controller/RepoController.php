@@ -398,6 +398,50 @@ final class RepoController extends Controller
         ]);
     }
 
+    /** 从某分支创建新分支 */
+    public function createBranch(string $owner, string $name): void
+    {
+        $user = $this->requireLogin();
+        $repo = $this->loadRepo($owner, $name);
+        if (!Repository::canWrite((int)$user['id'], $repo)) {
+            abort(403, '没有写入权限');
+        }
+        Csrf::verify();
+        $newName = trim((string)$this->req->post('name', ''));
+        $from = (string)$this->req->post('from', (string)$repo['default_branch']);
+        try {
+            Git::createBranch(Repository::path($repo), $newName, $from);
+            Session::flash('success', '分支 ' . $newName . ' 已创建');
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
+        $this->redirect(repo_url($repo, '/branches'));
+    }
+
+    /** 删除分支（禁止删除默认分支） */
+    public function deleteBranch(string $owner, string $name): void
+    {
+        $user = $this->requireLogin();
+        $repo = $this->loadRepo($owner, $name);
+        if (!Repository::canWrite((int)$user['id'], $repo)) {
+            abort(403, '没有写入权限');
+        }
+        Csrf::verify();
+        $branch = (string)$this->req->post('branch', '');
+        if ($branch === (string)$repo['default_branch']) {
+            Session::flash('error', '默认分支不可删除');
+            $this->redirect(repo_url($repo, '/branches'));
+            return;
+        }
+        try {
+            Git::deleteBranch(Repository::path($repo), $branch);
+            Session::flash('success', '分支 ' . $branch . ' 已删除');
+        } catch (RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
+        $this->redirect(repo_url($repo, '/branches'));
+    }
+
     public function tags(string $owner, string $name): void
     {
         $repo = $this->loadRepo($owner, $name);

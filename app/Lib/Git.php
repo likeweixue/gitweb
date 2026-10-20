@@ -276,6 +276,230 @@ HOOK;
         return $tags;
     }
 
+    // --------------------------------------------------------------- 分支与合并（bare 仓库）
+
+    public static function isValidBranchName(string $name): bool
+    {
+        if ($name === '' || mb_strlen($name) > 250) {
+            return false;
+        }
+        return preg_match('/^[A-Za-z0-9._\/-]+$/', $name) === 1
+            && $name[0] !== '-'
+            && !str_contains($name, '..')
+            && !str_contains($name, '//')
+            && !str_ends_with($name, '/')
+            && !str_ends_with($name, '.lock')
+            && !str_ends_with($name, '.');
+    }
+
+    /** 分支是否存在 */
+    public static function branchExists(string $dir, string $name): bool
+    {
+        $result = self::run(['-C', $dir, 'show-ref', '--verify', '--quiet', 'refs/heads/' . $name]);
+        return $result['code'] === 0;
+    }
+
+    /** 从某引用/SHA 创建分支 */
+    public static function createBranch(string $dir, string $name, string $fromRef): void
+    {
+        if (!self::isValidBranchName($name)) {
+            throw new RuntimeException('分支名非法');
+        }
+        if (self::branchExists($dir, $name)) {
+            throw new RuntimeException('分支已存在');
+        }
+        $fromSha = self::resolveRef($dir, $fromRef);
+        if ($fromSha === null) {
+            throw new RuntimeException('源引用不存在');
+        }
+        $result = self::run(['-C', $dir, 'branch', $name, $fromSha]);
+        if ($result['code'] !== 0) {
+            throw new RuntimeException('创建分支失败: ' . $result['err']);
+        }
+    }
+
+    /** 删除分支（强制） */
+    public static function deleteBranch(string $dir, string $name): void
+    {
+        if (!self::isValidBranchName($name)) {
+            throw new RuntimeException('分支名非法');
+        }
+        $result = self::run(['-C', $dir, 'branch', '-D', $name]);
+        if ($result['code'] !== 0) {
+            throw new RuntimeException('删除分支失败: ' . $result['err']);
+        }
+    }
+
+    /** 更新引用 */
+    public static function updateRef(string $dir, string $ref, string $sha): void
+    {
+        $result = self::run(['-C', $dir, 'update-ref', $ref, $sha]);
+        if ($result['code'] !== 0) {
+            throw new RuntimeException('更新引用失败: ' . $result['err']);
+        }
+    }
+
+    /** 判断 $maybeAncestor 是否为 $sha 的祖先（含相等） */
+    public static function isAncestor(string $dir, string $maybeAncestor, string $sha): bool
+    {
+        $a = self::resolveRef($dir, $maybeAncestor);
+        $b = self::resolveRef($dir, $sha);
+        if ($a === null || $b === null) {
+            return false;
+        }
+        $result = self::run(['-C', $dir, 'merge-base', '--is-ancestor', $a, $b]);
+        return $result['code'] === 0;
+    }
+
+    public static function mergeBase(string $dir, string $a, string $b): ?string
+    {
+        $ra = self::resolveRef($dir, $a);
+        $rb = self::resolveRef($dir, $b);
+        if ($ra === null || $rb === null) {
+            return null;
+        }
+        $result = self::run(['-C', $dir, 'merge-base', $ra, $rb]);
+        if ($result['code'] !== 0) {
+            return null;
+        }
+        $sha = trim($result['out']);
+        return preg_match('/^[0-9a-f]{40,64}$/', $sha) === 1 ? $sha : null;
+    }
+
+    /**
+     * 从另一个仓库抓取指定引用到本仓库的临时引用，返回抓取的 SHA
+     * 用于合并 Fork 来源的 PR（head 仓不同于 base 仓）
+     */
+    public static function fetchRef(string $dstDir, string $srcDir, string $srcRef, string $tmpRef): ?string
+    {
+        $result = self::run(['-C', $dstDir, 'fetch', $srcDir, $srcRef . ':' . $tmpRef]);
+        if ($result['code'] !== 0) {
+            return null;
+        }
+        return self::resolveRef($dstDir, $tmpRef);
+    }
+
+    /**
+     * 在 bare 仓库中合并（无工作树）：将 headSha 合并进 baseRef 分支。
+     * 策略：merge（创建合并提交，--no-ff）、squash（压为单个提交）、rebase（无冲突时按树重放）。
+     * 返回新分支顶端 SHA；无法自动合并（冲突）时抛出 RuntimeException。
+     *
+     * @param array<string,string> $author
+     */
+    public static function merge(string $dir, string $baseRef, string $headSha, string $message, array $author, string $strategy = 'merge'): string
+    {
+        $baseSha = self::resolveRef($dir, $baseRef);
+        if ($baseSha === null) {
+            throw new RuntimeException('base 引用不存在');
+        }
+        if (self::resolveRef($dir, $headSha) === null) {
+            throw new RuntimeException('head 提交不存在');
+        }
+        if (!in_array($strategy, ['merge', 'squash', 'rebase'], true)) {
+            throw new RuntimeException('不支持的合并策略');
+        }
+        if (!self::isValidRef('refs/heads/' . $baseRef) && !self::isValidBranchName($baseRef)) {
+            throw new RuntimeException('base 分支名非法');
+        }
+
+        $name = (string)($author['name'] ?? 'Gitweb');
+        $email = (string)($author['email'] ?? 'gitweb@localhost');
+        $date = date('c');
+        $env = [
+            'GIT_AUTHOR_NAME'     => $name,
+            'GIT_AUTHOR_EMAIL'    => $email,
+            'GIT_AUTHOR_DATE'     => $date,
+            'GIT_COMMITTER_NAME'  => $name,
+            'GIT_COMMITTER_EMAIL' => $email,
+            'GIT_COMMITTER_DATE'  => $date,
+        ];
+
+        if ($strategy === 'rebase') {
+            return self::rebaseOnto($dir, $baseSha, $headSha, $baseRef, $env);
+        }
+
+        $mb = self::mergeBase($dir, $baseSha, $headSha);
+        // 任一方向可 fast-forward：直接移动引用（merge/squash 在无分叉时结果一致）
+        if ($mb !== null && ($mb === $headSha || $mb === $baseSha)) {
+            self::updateRef($dir, 'refs/heads/' . $baseRef, $headSha);
+            return $headSha;
+        }
+
+        // 真正的三方合并（无工作树；merge-tree --write-tree 自动计算 merge-base）
+        $treeResult = self::run(['-C', $dir, 'merge-tree', '--write-tree', $baseSha, $headSha], null, null, $env);
+        if ($treeResult['code'] !== 0) {
+            throw new RuntimeException('合并冲突，无法自动合并：' . trim($treeResult['err']));
+        }
+        $tree = trim($treeResult['out']);
+        if (!preg_match('/^[0-9a-f]{40,64}$/', $tree)) {
+            throw new RuntimeException('合并失败：未得到树对象');
+        }
+
+        if ($strategy === 'squash') {
+            $newCommit = self::commitTree($dir, $tree, [$baseSha], $message, $env);
+        } else {
+            $newCommit = self::commitTree($dir, $tree, [$baseSha, $headSha], $message, $env);
+        }
+        self::updateRef($dir, 'refs/heads/' . $baseRef, $newCommit);
+        return $newCommit;
+    }
+
+    /** @param array<string,string> $author */
+    public static function commitTree(string $dir, string $tree, array $parents, string $message, array $authorEnv): string
+    {
+        $args = ['-C', $dir, 'commit-tree', $tree];
+        foreach ($parents as $p) {
+            $args[] = '-p';
+            $args[] = $p;
+        }
+        $result = self::run($args, $message . "\n", null, $authorEnv);
+        if ($result['code'] !== 0) {
+            throw new RuntimeException('commit-tree 失败: ' . $result['err']);
+        }
+        $sha = trim($result['out']);
+        if (!preg_match('/^[0-9a-f]{40,64}$/', $sha)) {
+            throw new RuntimeException('commit-tree 未返回 SHA');
+        }
+        return $sha;
+    }
+
+    /** rebase：将 base..head 的提交逐个在最新 parent 之上重放（冲突则中止，杜绝静默丢数据） */
+    private static function rebaseOnto(string $dir, string $baseSha, string $headSha, string $baseRef, array $env): string
+    {
+        $commits = self::logBetween($dir, $baseSha, $headSha, 2000);
+        if ($commits === []) {
+            self::updateRef($dir, 'refs/heads/' . $baseRef, $headSha);
+            return $headSha;
+        }
+        $commits = array_reverse($commits); // 最旧 → 最新
+        $parent = $baseSha;
+        foreach ($commits as $i => $commit) {
+            $hash = $commit['hash'];
+            // 检测该提交在 $parent 之上重放是否冲突（merge-tree 自动计算 merge-base）
+            $check = self::run(['-C', $dir, 'merge-tree', '--write-tree', $parent, $hash], null, null, $env);
+            if ($check['code'] !== 0) {
+                throw new RuntimeException('rebase 在第 ' . ($i + 1) . ' 个提交处遇到冲突，无法自动 rebase');
+            }
+            $tree = trim($check['out']);
+            if (!preg_match('/^[0-9a-f]{40,64}$/', $tree)) {
+                throw new RuntimeException('rebase 失败：未得到树对象');
+            }
+            $meta = self::commitMeta($dir, $hash);
+            if ($meta === null) {
+                continue;
+            }
+            $msg = $meta['body'] !== '' ? $meta['body'] : $meta['subject'];
+            $authorEnv = array_merge($env, [
+                'GIT_AUTHOR_NAME'     => $meta['author_name'],
+                'GIT_AUTHOR_EMAIL'    => $meta['author_email'],
+                'GIT_AUTHOR_DATE'     => $meta['author_date'],
+            ]);
+            $parent = self::commitTree($dir, $tree, [$parent], $msg, $authorEnv);
+        }
+        self::updateRef($dir, 'refs/heads/' . $baseRef, $parent);
+        return $parent;
+    }
+
     // --------------------------------------------------------------- 目录树 / 文件
 
     /**

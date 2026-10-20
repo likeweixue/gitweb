@@ -57,6 +57,21 @@ $router->get('/{owner}/{repo}/info/refs', 'GitHttpController@infoRefs');
 $router->post('/{owner}/{repo}/git-upload-pack', 'GitHttpController@uploadPack');
 $router->post('/{owner}/{repo}/git-receive-pack', 'GitHttpController@receivePack');
 
+// ---------- Pull Requests（须早于通用仓库路由） ----------
+$router->get('/{owner}/{repo}/pulls', 'PullRequestController@index');
+$router->get('/{owner}/{repo}/pulls/new', 'PullRequestController@new');
+$router->post('/{owner}/{repo}/pulls', 'PullRequestController@store');
+$router->get('/{owner}/{repo}/pulls/{number:\d+}', 'PullRequestController@show');
+$router->post('/{owner}/{repo}/pulls/{number:\d+}/comment', 'PullRequestController@comment');
+$router->post('/{owner}/{repo}/pulls/{number:\d+}/review', 'PullRequestController@review');
+$router->post('/{owner}/{repo}/pulls/{number:\d+}/merge', 'PullRequestController@merge');
+$router->post('/{owner}/{repo}/pulls/{number:\d+}/close', 'PullRequestController@close');
+$router->post('/{owner}/{repo}/pulls/{number:\d+}/reopen', 'PullRequestController@reopen');
+
+// ---------- 分支管理 ----------
+$router->post('/{owner}/{repo}/branches', 'RepoController@createBranch');
+$router->post('/{owner}/{repo}/branches/delete', 'RepoController@deleteBranch');
+
 // ---------- Issues ----------
 $router->get('/{owner}/{repo}/issues', 'IssueController@index');
 $router->get('/{owner}/{repo}/issues/new', 'IssueController@new');

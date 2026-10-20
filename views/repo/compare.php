@@ -35,6 +35,14 @@
       <code class="mono"><?= e($base) ?></code> ... <code class="mono"><?= e($head) ?></code>
       <span class="text-muted text-small"><?= count($commits) ?> 个提交</span>
     </h3>
+    <div class="compare-actions">
+      <?php if ($commits !== []): ?>
+        <a class="btn btn-primary" href="<?= repo_url($repo, '/pulls/new?base=' . rawurlencode($base) . '&head=' . rawurlencode($head)) ?>">
+          <?= icon('pull-request', 15) ?> 发起 Pull request
+        </a>
+      <?php endif; ?>
+      <a class="btn" href="<?= repo_url($repo, '/pulls') ?>"><?= icon('pull-request', 15) ?> 查看所有 PR</a>
+    </div>
     <?php if ($commits !== []): ?>
     <div class="commit-list">
       <?php foreach ($commits as $commit): ?>

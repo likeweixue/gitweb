@@ -7,7 +7,8 @@
 ## 特性
 
 - **Git 核心**：bare 仓库管理、Fork；HTTPS 智能协议（`git http-backend`）与 SSH（`gitweb-shell`）双协议 clone / fetch / push
-- **协作**：Issues、标签、协作者（读 / 写 / 管理）、私有仓库、Star / Fork
+- **协作**：**Pull Request**（分支对比、讨论评论、审查 approve / request changes、三种合并策略 merge / squash / rebase、跨仓库 fork PR）、Issues、标签、协作者（读 / 写 / 管理）、私有仓库、Star / Fork
+- **分支管理**：Web 端新建 / 删除分支
 - **账户**：注册 / 登录 / 记住我 / 防爆破 / 个人访问令牌 / SSH 公钥 / identicon 头像（零图片资源）
 - **代码浏览**：目录树、文件高亮（13 种语言）、Markdown（GFM 子集）渲染、提交历史、差异对比、分支 / 标签
 - **管理后台**：用户 / 仓库 / 配额 / 设置、统计

@@ -196,6 +196,50 @@ CREATE TABLE IF NOT EXISTS `webhooks` (
 );
 CREATE INDEX IF NOT EXISTS `idx_webhook_repo` ON `webhooks` (`repo_id`);
 
+-- ---------- Pull Requests ----------
+CREATE TABLE IF NOT EXISTS `pull_requests` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `repo_id` INTEGER NOT NULL REFERENCES `repositories`(`id`) ON DELETE CASCADE,
+  `number` INTEGER NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `body` TEXT NOT NULL DEFAULT '',
+  `author_id` INTEGER NOT NULL REFERENCES `users`(`id`) ON DELETE CASCADE,
+  `base_ref` VARCHAR(100) NOT NULL DEFAULT 'main',
+  `head_ref` VARCHAR(100) NOT NULL DEFAULT '',
+  `head_repo_id` INTEGER DEFAULT NULL REFERENCES `repositories`(`id`) ON DELETE SET NULL,
+  `head_sha` VARCHAR(64) NOT NULL DEFAULT '',
+  `state` VARCHAR(10) NOT NULL DEFAULT 'open',
+  `merge_strategy` VARCHAR(10) DEFAULT NULL,
+  `merged_by` INTEGER DEFAULT NULL REFERENCES `users`(`id`) ON DELETE SET NULL,
+  `merged_at` TIMESTAMP NULL DEFAULT NULL,
+  `closed_by` INTEGER DEFAULT NULL REFERENCES `users`(`id`) ON DELETE SET NULL,
+  `closed_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (`repo_id`, `number`)
+);
+CREATE INDEX IF NOT EXISTS `idx_pr_repo_state` ON `pull_requests` (`repo_id`, `state`, `created_at`);
+
+CREATE TABLE IF NOT EXISTS `pull_request_comments` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `pr_id` INTEGER NOT NULL REFERENCES `pull_requests`(`id`) ON DELETE CASCADE,
+  `author_id` INTEGER NOT NULL REFERENCES `users`(`id`) ON DELETE CASCADE,
+  `body` TEXT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS `idx_prcomment_pr` ON `pull_request_comments` (`pr_id`, `created_at`);
+
+CREATE TABLE IF NOT EXISTS `pull_request_reviews` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `pr_id` INTEGER NOT NULL REFERENCES `pull_requests`(`id`) ON DELETE CASCADE,
+  `author_id` INTEGER NOT NULL REFERENCES `users`(`id`) ON DELETE CASCADE,
+  `state` VARCHAR(15) NOT NULL DEFAULT 'commented',
+  `body` TEXT NOT NULL DEFAULT '',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS `idx_prreview_pr` ON `pull_request_reviews` (`pr_id`, `created_at`);
+
 CREATE TABLE IF NOT EXISTS `settings` (
   `name` VARCHAR(60) PRIMARY KEY,
   `value` TEXT NOT NULL,
