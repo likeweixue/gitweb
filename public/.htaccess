@@ -1,0 +1,22 @@
+# Gitweb - Apache 重写规则
+# 适用于 Apache 2.4 + mod_rewrite（站点根目录指向 public/）
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 已存在的文件/目录直接访问
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 其余请求全部交给前端控制器
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# 禁止访问敏感目录
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(sql|log|md)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

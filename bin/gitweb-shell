@@ -1,0 +1,61 @@
+#!/bin/bash
+# =============================================================
+# Gitweb SSH 强制命令包装
+#
+# 由 sshd 通过 authorized_keys 的 forced command 调用，实现：
+#   - 仅允许 git-upload-pack / git-receive-pack / git-upload-archive
+#   - 拒绝交互式 Shell
+#   - 推送前校验数据库权限
+#
+# 安装（部署文档 README.md 中有完整说明）：
+#   1) 将本脚本加入 authorized_keys：
+#      command="/www/sites/gitweb.example.com/bin/gitweb-shell <用户名>",no-agent-forwarding,no-port-forwarding,no-pty,no-X11-forwarding ssh-ed25519 AAAA... 备注
+#   2) 确保运行 php 与 git 在 SSH 用户的 PATH 中（或设置 GITWEB_PHP 环境变量）
+# =============================================================
+set -u
+
+GITWEB_USER="${1:-}"
+SSH_CMD="${SSH_ORIGINAL_COMMAND:-}"
+APP_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PHP_BIN="${GITWEB_PHP:-php}"
+REPOS_ROOT="$APP_ROOT/storage/repositories"
+
+if [ -z "$GITWEB_USER" ]; then
+    echo "gitweb-shell: 缺少用户名参数" >&2
+    exit 1
+fi
+
+if [ -z "$SSH_CMD" ]; then
+    echo "你好，$GITWEB_USER！Gitweb 仅提供 Git 服务（clone/push），未开放交互式 Shell。"
+    exit 1
+fi
+
+# 仅允许三个 git 服务命令，且参数必须是带引号的单个仓库路径
+if [[ "$SSH_CMD" =~ ^(git-upload-pack|git-receive-pack|git-upload-archive)\ \'(.+)\'$ ]]; then
+    SERVICE="${BASH_REMATCH[1]}"
+    REPO="${BASH_REMATCH[2]}"
+else
+    echo "gitweb-shell: 不支持的命令: $SSH_CMD" >&2
+    exit 1
+fi
+
+# 仓库路径安全校验（防目录穿越）
+REPO_PATH="${REPO#/}"
+REPO_PATH="${REPO_PATH%.git}"
+if ! [[ "$REPO_PATH" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+    echo "gitweb-shell: 非法仓库路径" >&2
+    exit 1
+fi
+
+MODE="read"
+[ "$SERVICE" = "git-receive-pack" ] && MODE="write"
+
+# 权限校验（查询数据库：用户状态 / 仓库可见性 / 协作者）
+if "$PHP_BIN" "$APP_ROOT/bin/ssh-check.php" "$GITWEB_USER" "$REPO_PATH" "$MODE" >/dev/null 2>&1; then
+    cd "$REPOS_ROOT" || exit 1
+    # 转为相对路径后交给 git-shell（git-shell 只放行内置 git 命令）
+    exec git-shell -c "$SERVICE '$REPO_PATH.git'"
+else
+    echo "ERROR: 没有仓库 $REPO_PATH 的 $MODE 权限（或仓库不存在 / 账号异常）" >&2
+    exit 1
+fi

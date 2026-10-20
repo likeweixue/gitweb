@@ -1,0 +1,25 @@
+/* =============================================================
+   语法高亮配色（GitHub Light 风格）
+   与 app/Lib/Highlighter.php 的 hljs-* class 对应
+   ============================================================= */
+
+.hljs { color: #1f2328; background: transparent; }
+
+.hljs-comment, .hljs-quote { color: #6e7781; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-type { color: #cf222e; }
+.hljs-string, .hljs-meta .hljs-string, .hljs-regexp { color: #0a3069; }
+.hljs-number { color: #0550ae; }
+.hljs-built_in, .hljs-variable, .hljs-template-variable { color: #953800; }
+.hljs-function, .hljs-title { color: #8250df; font-weight: 600; }
+.hljs-attr, .hljs-attribute { color: #0550ae; }
+.hljs-tag, .hljs-name { color: #116329; }
+.hljs-property { color: #0550ae; }
+.hljs-symbol, .hljs-bullet { color: #953800; }
+.hljs-operator { color: #0550ae; }
+.hljs-meta { color: #6e7781; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
+.hljs-section { color: #cf222e; font-weight: 700; }
+
+/* 行内代码高亮容器 */
+.blob-code .hljs, .markdown-body pre .hljs { display: block; }

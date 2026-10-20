@@ -1,0 +1,13 @@
+# ---- 运行时数据（含真实 Git 仓库、SQLite 库、日志、缓存，绝不入库）----
+storage/
+*.log
+
+# ---- 真实配置（含数据库账号密码，绝不入库；只提交 config.example.php 模板）----
+config.php
+
+# ---- 本地记忆 / 编辑器 / 系统文件 ----
+.workbuddy/
+.DS_Store
+
+# ---- 开发残留占位脚本 ----
+src/
